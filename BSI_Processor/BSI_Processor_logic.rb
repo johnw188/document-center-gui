@@ -1,18 +1,48 @@
 require "BSI_Processor_GUI.rb"
+require "BSI_Parser.rb"
 
-class MainWindow
+class BSI_processor
+  attr_reader :old_file_path, :new_file_path
   def init
     @button_go.connect(Fox::SEL_COMMAND){
-      @text2.text = @text2.text + "\nNewLine"
+      start_processing
     }
+    
+    file_select_dialog = Fox::FXFileDialog.new(@topwin, "Select a BSI data extract")
+    file_select_dialog.patternList = [
+      "All Files(*)",
+      "Excel Files (*.xls)"
+    ]
+    file_select_dialog.selectMode = Fox::SELECTFILE_EXISTING
+    
+    @button_old_file_select.connect(Fox::SEL_COMMAND){
+      if file_select_dialog.execute != 0
+        @old_file_path = file_select_dialog.filename
+        @old_file_name.text = @old_file_path.split("\\")[-1]
+      end
+    }
+    
+  @button_new_file_select.connect(Fox::SEL_COMMAND){
+      if file_select_dialog.execute != 0
+        @new_file_path = file_select_dialog.filename
+        @new_file_name.text = @new_file_path.split("\\")[-1]
+      end
+    }
+    
+    @progressbar.total = 500
   end
+  
+  def start_processing
+    @progressbar.increment(10)
+  end
+    
 end
 
 #unit test
 if __FILE__==$0
 	require 'libGUIb16'
 	app=FX::App.new
-	w=MainWindow.new app
+	w=BSI_processor.new app
 	w.topwin.show(0)
 	app.create
 	app.run
