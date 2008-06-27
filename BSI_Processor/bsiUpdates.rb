@@ -206,58 +206,39 @@ def writeInfoPage(docNameArray, filename)
   htmlFile.close
 end
 
-directory = Dir['*']
-bsiFiles = []
-directory.each {|file|
-  if file[0,8].upcase == "BSI DATA"
-    bsiFiles << file
-  end
-}
-oldDate =0
-newDate =0
-oldFile = ""
-newFile = ""
-bsiFiles.each{|file|
-  dateArray = file.split(" ")[-1].sub(".xls", "").split("-")
-  fileDate = "#{dateArray[2]}#{dateArray[1]}#{dateArray[0]}".to_i
-  if fileDate > newDate
-    oldDate = newDate
-    newDate = fileDate
-    oldFile = newFile
-    newFile = file
-  else
-    if fileDate > oldDate
-      oldDate = fileDate
-      oldFile = file
+def getLatestFiles(path = dir.pwd)
+  Dir.chdir(path)
+  directory = Dir['*']
+  bsiFiles = []
+  directory.each {|file|
+    if file[0,8].upcase == "BSI DATA"
+      bsiFiles << file
     end
-  end
-}
-
-puts "Old information - #{oldFile}\nNew information - #{newFile}"
-
-puts "Are these the files you wish to compare? [y/n]"
-answer = gets
-count = 1
-if answer.chomp.upcase == "N"
-  directory.each{|file|
-    puts "#{count}) #{file}"
-    count += 1
   }
-
-  puts "Enter the number of the older file"
-  oldFileChoice = gets.chomp.to_i
-  puts "Enter the number of the newer file"
-  newFileChoice = gets.chomp.to_i
-
-  puts "Old information - #{directory[oldFileChoice - 1]}\nNew  information - #{directory[newFileChoice - 1]}"
-
-  oldFile = directory[oldFileChoice - 1]
-  newFile = directory[newFileChoice - 1]
+  oldDate =0
+  newDate =0
+  oldFile = ""
+  newFile = ""
+  bsiFiles.each{|file|
+    dateArray = file.split(" ")[-1].sub(".xls", "").split("-")
+    fileDate = "#{dateArray[2]}#{dateArray[1]}#{dateArray[0]}".to_i
+    if fileDate > newDate
+      oldDate = newDate
+      newDate = fileDate
+      oldFile = newFile
+      newFile = file
+    else
+      if fileDate > oldDate
+	oldDate = fileDate
+	oldFile = file
+      end
+    end
+  }
+  return [oldFile, newFile]
 end
 
 newData = BSI_excel_data.new("#{Dir.pwd}/#{newFile}")
 oldData = BSI_excel_data.new("#{Dir.pwd}/#{oldFile}")
-
 
 newData.fixDates
 oldData.fixDates
