@@ -37,7 +37,7 @@ end
 
 class BSI_excel_data < Source_data
   attr_reader :dataHash, :columnValues
-  def initialize(filepath)
+  def initialize(filepath, processor_gui)
     excel = WIN32OLE::new('excel.Application')
     workbook = excel.Workbooks.Open(filepath)
     worksheet = workbook.Worksheets(1)
@@ -53,6 +53,7 @@ class BSI_excel_data < Source_data
       infoArray.push line.to_i
       @dataHash[worksheet.Range("a#{line}")['Value']] = infoArray
       line.succ!
+      processor_gui.progressbar.increment(1)
     end
     excel.Quit
   end
@@ -64,6 +65,7 @@ class BSI_excel_data < Source_data
    }
    newItemsHash
  end
+ 
  def fixDates
    column = @columnValues.rindex("Publication date")
    @dataHash.each_value {|value|
@@ -71,6 +73,7 @@ class BSI_excel_data < Source_data
      value[column] = "#{newDate[1]}/#{newDate[0]}/#{newDate[2]}"
    }
  end
+ 
  def prepareOutput
    outputArray = []
    @dataHash.each_value {|value|
@@ -203,4 +206,35 @@ def writeInfoPage(docNameArray, filename)
   }
   htmlFile.puts "</body>\n</html>"
   htmlFile.close
+end
+
+def getLatestFiles(path = dir.pwd)
+  Dir.chdir(path)
+  directory = Dir['*']
+  bsiFiles = []
+  directory.each {|file|
+    if file[0,8].upcase == "BSI DATA"
+      bsiFiles << file
+    end
+  }
+  oldDate =0
+  newDate =0
+  oldFile = ""
+  newFile = ""
+  bsiFiles.each{|file|
+    dateArray = file.split(" ")[-1].sub(".xls", "").split("-")
+    fileDate = "#{dateArray[2]}#{dateArray[1]}#{dateArray[0]}".to_i
+    if fileDate > newDate
+      oldDate = newDate
+      newDate = fileDate
+      oldFile = newFile
+      newFile = file
+    else
+      if fileDate > oldDate
+	oldDate = fileDate
+	oldFile = file
+      end
+    end
+  }
+  return [oldFile, newFile]
 end
