@@ -83,9 +83,6 @@ class BSI_processor
 					w.padRight=5
 					w.height=21
 					w.shadowColor=Fox::FXRGBA(172,168,153,255)
-					@button_go.connect(Fox::SEL_COMMAND){
-						#
-					}
 				}
 				FX::Button.new(@controls_frame){|w|
 					@button_stop=w
@@ -109,7 +106,7 @@ class BSI_processor
 					w.numColumns=40
 					w.layoutHints=4
 					w.x=298
-					w.justify=65536
+					w.justify=Fox::JUSTIFY_LEFT
 				}
 				FX::Label.new(@controls_frame){|w|
 					@output_filename_label=w
