@@ -25,7 +25,7 @@ class BSI_Website_Parser
   def searchForDocument(docTitle)
     @form.q = docTitle
     page = @agent.submit(@form)
-    page = @agent.click page.links.find { |l| l.text =~ Regexp.new(docTitle)}
+    page = @agent.click page.links.find { |l| l.text.include? docTitle}
     pars = ""
     page.search("//div[@id=tab2]").each {|p|
       pars << p.inner_html

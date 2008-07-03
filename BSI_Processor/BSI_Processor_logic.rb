@@ -12,10 +12,16 @@ class BSI_processor
     @userDefinedFilename = false
     
     @button_go.connect(Fox::SEL_COMMAND){
-      @output_text.appendText("\nLoading requested files, please be patient...")
-      @processingThread = Thread.new{
-        start_processing
-      }
+      if (@option_excel.unchecked? && @option_download.unchecked?)
+        Fox::FXMessageBox.warning(@topwin, Fox::MBOX_OK, "No Output Selected", "You must select at least one data output option")
+      elsif (@output_filename_field.text == "")
+        Fox::FXMessageBox.warning(@topwin, Fox::MBOX_OK, "No Filename", "You must enter a filename for the output files")
+      else
+        @processingThread = Thread.new{
+          @output_text.appendText("\nLoading requested files, please be patient...")
+          start_processing
+        }
+      end
     }
     
     @button_stop.connect(Fox::SEL_COMMAND){

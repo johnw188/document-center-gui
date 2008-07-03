@@ -18,7 +18,9 @@ end
 
 class BSI_Website_Parser
   def initialize
+    Hpricot.buffer_size = 262144
     @agent = WWW::Mechanize.new
+    @agent.user_agent_alias = 'Windows Mozilla'
     page = @agent.get 'http://www.bsi-global.com/en/My-BSI/My-Subscriptions/'
     @form = page.forms[0]
   end
@@ -27,12 +29,13 @@ class BSI_Website_Parser
     puts "Searching for #{docTitle}"
     @form.q = docTitle
     page = @agent.submit(@form)
-    page = @agent.click page.links.find { |l| l.text =~ Regexp.new(docTitle)}
+    page = @agent.click page.links.find { |l| l.text.include? docTitle}
     puts "Found #{docTitle}"
     pars = ""
     page.search("//div[@id=tab2]").each {|p|
       pars << p.inner_html
     }
+    puts "Done finding HTML"
     return pars
   end
 end
@@ -60,21 +63,21 @@ class BSI_excel_data < Source_data
     excel.Quit
   end
   
- def getNewItems(olderBSIdata)
-   newItemsHash = {}
-   @dataHash.each_pair{|key, value|
-     newItemsHash[key] = value unless olderBSIdata.dataHash.has_key?(key)
-   }
-   newItemsHash
- end
+  def getNewItems(olderBSIdata)
+    newItemsHash = {}
+    @dataHash.each_pair{|key, value|
+      newItemsHash[key] = value unless olderBSIdata.dataHash.has_key?(key)
+    }
+    newItemsHash
+  end
  
- def fixDates
-   column = @columnValues.rindex("Publication date")
-   @dataHash.each_value {|value|
-     newDate = value[column].split("/")
-     value[column] = "#{newDate[1]}/#{newDate[0]}/#{newDate[2]}"
-   }
- end
+  def fixDates
+    column = @columnValues.rindex("Publication date")
+    @dataHash.each_value {|value|
+      newDate = value[column].split("/")
+      value[column] = "#{newDate[1]}/#{newDate[0]}/#{newDate[2]}"
+    }
+  end
  
  def prepareOutput
    outputArray = []
@@ -139,7 +142,7 @@ def writeToExcel(array, filename)
  excel.Quit
 end
 
-def writeInfoPage(docNameArray, filename)
+def writeInfoPage(docNameArray, filename, processor_gui = nil)
   bsiParser = BSI_Website_Parser.new
   htmlFile = File.new(filename, "wb")
   htmlFile.puts "<html>
@@ -200,8 +203,11 @@ def writeInfoPage(docNameArray, filename)
   </style>
   </head>
   <body>"
+  processor_gui.output_text.appendText("\nInitialized document\n") unless processor_gui == nil
   docNameArray.each {|document|
+    processor_gui.output_text.appendText("Searching for #{document} - ") unless processor_gui == nil
     data = bsiParser.searchForDocument(document)
+    processor_gui.output_text.appendText("Found!\n") unless processor_gui == nil
     startOfHTML = data.index("<table class=")
     htmlFile.puts "<p><p><h2 class=\"tabName\">#{document}</h2>"
     htmlFile.puts data[startOfHTML..-1]
@@ -210,7 +216,7 @@ def writeInfoPage(docNameArray, filename)
   htmlFile.close
 end
 
-def getLatestFiles(path = dir.pwd)
+def getLatestFiles(path = Dir.pwd)
   Dir.chdir(path)
   directory = Dir['*']
   bsiFiles = []
