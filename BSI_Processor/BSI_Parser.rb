@@ -42,7 +42,7 @@ end
 
 class BSI_excel_data < Source_data
   attr_reader :dataHash, :columnValues
-  def initialize(filepath, processor_gui)
+  def initialize(filepath, processor_gui = nil)
     excel = WIN32OLE::new('excel.Application')
     workbook = excel.Workbooks.Open(filepath)
     worksheet = workbook.Worksheets(1)
@@ -58,7 +58,7 @@ class BSI_excel_data < Source_data
       infoArray.push line.to_i
       @dataHash[worksheet.Range("a#{line}")['Value']] = infoArray
       line.succ!
-      processor_gui.progressbar.increment(1)
+      processor_gui.progressbar.increment(1) unless processor_gui == nil
     end
     excel.Quit
   end
