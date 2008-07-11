@@ -90,11 +90,10 @@ class BSI_processor
     end
     if @option_download.checked?
       @output_text.appendText("\nWriting HTML report to #{@output_filename_field.text}.html...")
-      writeInfoPage(newItems.keys, "#{@output_filename_field.text}.html")
+      writeInfoPage(newItems.keys, "#{@output_filename_field.text}.html", self)
       @output_text.appendText(" Success!")
     end
-    @progressbar.progress = 59999
-    @progressbar.increment(1)
+    @progressbar.progress = 0
     @progressbar.showNumber
     @output_text.appendText("\nFinished processing data")
   end
