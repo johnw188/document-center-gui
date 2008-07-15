@@ -8,7 +8,8 @@ class DSCC_Email_Processor
       @DSCC_data = EmailInformation.new(dataArray, self)
       @processingThread = Thread.new{
         @textField.setText("Preparing to download documents...\n")
-        @DSCC_data.downloadDocuments("TestDownload")
+        @DSCC_data.downloadDocuments
+        @textField.setText("Successfully processed email data. To run another email, delete this text and paste\nthe contents of the new email in, then hit go.")
       }
     }
     

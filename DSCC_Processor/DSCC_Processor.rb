@@ -1,4 +1,5 @@
 require 'net/http'
+require 'net/ftp'
 require 'ftools'
 
 class EmailInformation
@@ -67,12 +68,15 @@ class EmailInformation
     @emailHash[documentName]
   end
 
-  def downloadDocuments(path = -1)
+  def downloadDocuments
     workingDirectory = Dir.getwd
-    unless path == -1
-      if !Dir[path].any? then Dir.mkdir(path) end
-      Dir.chdir(path)
+    i = 0
+    while Dir["temp#{i}"].any?
+      i += 1
     end
+    
+    Dir.mkdir("temp#{i}")
+    Dir.chdir("temp#{i}")
     
     numberOfFiles = @emailHash.keys.size
     i = 0
@@ -86,15 +90,25 @@ class EmailInformation
       print documentName, " was downloaded successfully\n"
       i += 1
       if i == numberOfFiles
-        @processorGUI.textField.appendText(" Downloaded!\nFinished processing, you may exit at any time")
+        @processorGUI.textField.appendText(" Downloaded!")
       else
         @processorGUI.textField.appendText(" Downloaded! (#{numberOfFiles - i} remaining)\n")
       end
     end
     
-    unless path == -1
-      Dir.chdir(workingDirectory)
-    end
+    @processorGUI.textField.appendText("\nUploading files to PDF library")
+    ftp = Net::FTP.new('192.168.1.99')
+    ftp.login
+    ftp.chdir('PDF/STAGING_AREA')
+    ftp.mkdir("DSCC") unless ftp.list.find{|i| /DSCC/ =~ i}
+    ftp.chdir("DSCC")
+    Dir["*"].each{|file|
+      ftp.putbinaryfile(file)
+      @processorGUI.textField.appendText(".")
+    }
+    @processorGUI.textField.appendText(" Finished\n")
+    ftp.quit
+    Dir.chdir(workingDirectory)
   end
   
 end
