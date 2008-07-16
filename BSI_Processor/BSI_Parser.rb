@@ -18,6 +18,8 @@ class Source_data
 end
 
 class BSI_Website_Parser
+  @errorArray = []
+  
   def initialize
     Hpricot.buffer_size = 262144
     @agent = WWW::Mechanize.new
@@ -30,12 +32,18 @@ class BSI_Website_Parser
     puts "Searching for #{docTitle}"
     @form.q = docTitle
     page = @agent.submit(@form)
-    page = @agent.click page.links.find { |l| l.text.include? docTitle}
-    puts "Found #{docTitle}"
-    pars = ""
-    page.search("//div[@id=tab2]").each {|p|
-      pars << p.inner_html
-    }
+    if page.links.find{|link| link.text.include? docTitle}
+      page = @agent.click page.links.find { |l| l.text.include? docTitle}
+      puts "Found #{docTitle}"
+      pars = ""
+      page.search("//div[@id=tab2]").each {|p|
+        pars << p.inner_html
+      }
+    else
+      @errorArray << docTitle
+      puts "Error finding #{docTitle}"
+      return nil
+    end
     puts "Done finding HTML"
     return pars
   end
@@ -211,10 +219,14 @@ def writeInfoPage(docNameArray, filename, processor_gui = nil)
   docNameArray.each {|document|
     processor_gui.output_text.appendText("Searching for #{document} - ") unless processor_gui == nil
     data = bsiParser.searchForDocument(document)
-    processor_gui.output_text.appendText("Found!\n") unless processor_gui == nil
-    startOfHTML = data.index("<table class=")
-    htmlFile.puts "<p><p><h2 class=\"tabName\">#{document}</h2>"
-    htmlFile.puts data[startOfHTML..-1]
+    if data
+      processor_gui.output_text.appendText("Found.\n") unless processor_gui == nil
+      startOfHTML = data.index("<table class=")
+      htmlFile.puts "<p><p><h2 class=\"tabName\">#{document}</h2>"
+      htmlFile.puts data[startOfHTML..-1]
+    else
+      processor_gui.output_text.appendText("Couldn't locate document :(")
+    end
     processor_gui.progressbar.increment(1) unless processor_gui == nil
   }
   htmlFile.puts "</body>\n</html>"
