@@ -40,7 +40,6 @@ class BSI_Website_Parser
         pars << p.inner_html
       }
     else
-      @errorArray << docTitle
       puts "Error finding #{docTitle}"
       return nil
     end
@@ -51,6 +50,7 @@ end
 
 class BSI_excel_data < Source_data
   attr_reader :dataHash, :columnValues
+
   def initialize(filepath, processor_gui = nil)
     excel = WIN32OLE::new('excel.Application')
     workbook = excel.Workbooks.Open(filepath)
@@ -152,6 +152,7 @@ def writeToExcel(array, filename)
 end
 
 def writeInfoPage(docNameArray, filename, processor_gui = nil)
+  if !processor_gui then puts "yay" end
   processor_gui.progressbar.progress = 0 unless processor_gui == nil
   processor_gui.progressbar.total = docNameArray.size unless processor_gui == nil
   processor_gui.progressbar.showNumber unless processor_gui == nil
@@ -216,6 +217,7 @@ def writeInfoPage(docNameArray, filename, processor_gui = nil)
   </head>
   <body>"
   processor_gui.output_text.appendText("\nInitialized document\n") unless processor_gui == nil
+  errorArray = []
   docNameArray.each {|document|
     processor_gui.output_text.appendText("Searching for #{document} - ") unless processor_gui == nil
     data = bsiParser.searchForDocument(document)
@@ -225,10 +227,17 @@ def writeInfoPage(docNameArray, filename, processor_gui = nil)
       htmlFile.puts "<p><p><h2 class=\"tabName\">#{document}</h2>"
       htmlFile.puts data[startOfHTML..-1]
     else
-      processor_gui.output_text.appendText("Couldn't locate document :(")
+      processor_gui.output_text.appendText("Couldn't locate document :(") unless processor_gui == nil
+      errorArray << document
     end
     processor_gui.progressbar.increment(1) unless processor_gui == nil
   }
+  htmlFile.puts "<br><br><b>The following items weren't located:</b>"
+  htmlFile.puts "<ul>"
+  errorArray.each{|error|
+    htmlFile.puts "<li>#{error}"
+  }
+  htmlFile.puts "</ul>"
   htmlFile.puts "</body>\n</html>"
   htmlFile.close
 end
